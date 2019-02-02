@@ -1,0 +1,231 @@
+---
+title: "Week_1(Diet_data_case_study)"
+author: "Priyadarshini De"
+date: "January 30, 2019"
+output: html_document
+---
+# Setting directory information
+```{r}
+path <- "C:/Users/depri/Desktop/advanced data analytics/R_and_descriptive_analytics_review(week1)/Diet Case Study"
+setwd(path)
+getwd()
+```
+# printing my working directory
+```{r}
+my_wd <- getwd()
+print(my_wd)
+```
+# Listing the directory and or files
+# list.dirs these functions produce a character vector of the names of files or directories in the named directory.
+```{r}
+list.dirs() # List the data directories
+files <- list.files("diet_data")  # list the data files
+files
+
+```
+# Basic understanding and basic statistics of the data, # look into one data file
+# read.csv reads a file in the table format and creates a dataframe from it with cases corresponding to lines and #variable to fields in the file.
+```{r}
+andy = read.csv("diet_data/Andy.csv")
+head(andy) # examine the first 6 rows in the file
+length(andy$Day) # this is a vector
+dim(andy)  # read the dimension of the data file
+str(andy)  # Compactly display an internal structure of the R object
+```
+# Read column headers
+```{r}
+names(andy)
+```
+# Get basic statistics about the data
+```{r}
+summary(andy)
+```
+# Subsetting the data
+# View the weight of andy on day1
+# Subset the data , the first row of the weight column
+```{r}
+andy[1, "Weight"] 
+# View the weight of andy on day 10th
+andy[10, "Weight"]
+```
+# Understanding the various approaches to filer data
+# filter rows based on a dynamic condition method 1 use the square brackets as follows #dataframe[row_filter,column_filter]
+```{r}
+andy[andy$Day==30, "Weight"] # Or we can use the subset function
+subset(andy$Weight,andy$Day==30) # or we can use the which function that returns the row index of the specified condition/filter
+andy[which(andy$Day==30), "Weight"]
+
+```
+# Extracting useful information 
+# How much weight andy lost from day 1 till Day 30?
+```{r}
+andy_start_date = andy[1,"Weight"]
+andy_end_date = andy[30, "Weight"]
+andy_lost_weight = andy_start_date - andy_end_date
+print(andy_lost_weight)
+```
+# Reading data from another file (John data file)
+```{r}
+#head(read.csv(files[3]))
+```
+# what is wrong incorrect path missing folder name how can we fix this issue?
+# Reading the filenames as well as their containing folder
+```{r}
+data_files_full = list.files("diet_data", full.names = TRUE)
+data_files_full
+```
+```{r}
+head(read.csv(data_files_full[3]))
+```
+# Binding the data frame of andy and david(binding two data frames)
+```{r}
+andy_david = rbind(andy, read.csv(data_files_full[2]))
+head(andy_david)
+tail(andy_david)
+```
+# Selecting certain rows from the binded data
+```{r}
+which(andy_david$Day==25)
+```
+# Selecting certain rows from the binded data
+```{r}
+day_25 = andy_david[which(andy_david$Day==25),] # or,
+day_25 = andy_david[andy_david$Day==30,]
+print(day_25) # or we can solve the reuslt for future use
+criteria = which(andy_david$Day==25)
+andy_david[criteria,]
+```
+# or selecting rows from the binded data
+```{r}
+andy_david[which(andy_david$Day==25),]
+```
+# Append everybody's data to the same dataframe
+# Manually using loops and rbind
+```{r}
+dat = data.frame() # create an empty dataframe called "dat" to hold the binded data
+for(i in 1:5){
+  dat = rbind(dat,read.csv(data_files_full[i]))
+}
+str(dat)
+```
+# Calculating the median of the weight column
+```{r}
+median(dat$Weight)
+```
+# It contains na lets see which row has na
+```{r}
+print(dat[77,])
+```
+# Getting the median of the weight column
+```{r}
+median(dat$Weight, na.rm=TRUE)
+```
+# Calculating the median of day 30 in all the data collection
+```{r}
+subjects_day_30 = dat[which(dat[,"Day"]==30),]
+print(subjects_day_30)
+
+```
+# median
+```{r}
+median(subjects_day_30$Weight)
+```
+# We have done a lot of manual data manipulation so far let us build a function that will return the median weight #of a given day
+```{r}
+weight_median = function(directory, day) {
+list_files= list.files(directory, full.names = TRUE) # create a list of files
+dat = data.frame()     # create an empty data frame
+for (i in 1:5)          # Loop through the file rbinding them together
+dat = rbind(dat, read.csv(list_files[i]))
+
+
+
+dat_subset = dat[which(dat[, "Day"]==day),] # Subsets the rows that match the day argument
+
+median(dat_subset[, "Weight"], na.rm=TRUE) # gettin the median of the column weight
+
+}
+```
+# Testing the function using various ways
+```{r}
+weight_median(directory="diet_data", day=20) # or
+weight_median("diet_data", 20)
+weight_median("diet_data", 4)
+weight_median("diet_data", 17)
+```
+# The better approach is to create an output object of an appropriate size and then fill it up
+```{r}
+files_full = list.files("diet_data", full.names=TRUE)
+summary(files_full)
+```
+# Create an empty list that's the length of our expected output.
+# Our input object is "files_full" and our empty list is "going to be tmp"
+```{r}
+tmp = vector(mode = "list", length = length(files_full))
+summary(tmp)
+```
+# Now we need to read in those csv files and drop them into our tmp list. Read in each of the csv files and place them inside our list
+```{r}
+for (i in seq_along(files_full)){
+  tmp[[i]] = read.csv(files_full[[i]])  # each element in the tmp list contains a dataframe of a patient file.
+}
+str(tmp)
+```
+# what we did was read in each of the csv files and place them inside our list.
+# Now we have a list of 5 elements called tmp where each element of the list is a data frame containing one of the csv files. This is functionally identical to using lapply
+```{r}
+tmp1 = lapply(files_full, read.csv)
+str(tmp1)
+```
+# or, 
+```{r}
+str(lapply(files_full, read.csv))
+```
+# Now how can we look at the data
+```{r}
+str(tmp[[1]])
+```
+# Lets look at the first 6 observations
+```{r}
+head(tmp[[1]][,"Day"])
+```
+# To manually rbind everything together
+```{r}
+output1 = rbind(tmp[[1]], tmp[[2]], tmp[[3]],tmp[[4]], tmp[[5]])
+str(output1)
+```
+# Better way use do.call()
+# The syntax is do.call(function you want to use, list of arguments)
+# do.call executes a function on a list of arguments to be passed to it.In our case we want to rbind() our list of data frames which tmp in this case
+```{r}
+
+output = do.call(rbind, tmp)
+str(output)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
